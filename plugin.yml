@@ -1,0 +1,10 @@
+name: MLGprison
+version: 1.0
+main: yoreni.MLGprison.main.Main
+softdepend: []
+commands:
+  a:
+  MLGprison:
+  rankup:
+  ranks:
+  pwarp:
