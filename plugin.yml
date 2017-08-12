@@ -1,9 +1,8 @@
 name: MLGprison
-version: 1.0
+version: 1.0.1
 main: yoreni.MLGprison.main.Main
-softdepend: []
+depend: [Valut]
 commands:
-  a:
   MLGprison:
   rankup:
   ranks:
