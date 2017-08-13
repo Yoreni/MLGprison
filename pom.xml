@@ -62,8 +62,8 @@
                 <scope>provided</scope>
         </dependency>
 		<dependency>
-				<artifactId>Valut</artifactId>
                 <groupId>net.milkbowl.vault</groupId>
+				<artifactId>Valut</artifactId>
                 <artifactId>VaultAPI</artifactId>
                 <version>1.6</version>
         </dependency>
