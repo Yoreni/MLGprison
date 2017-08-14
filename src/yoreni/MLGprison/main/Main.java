@@ -22,6 +22,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import net.milkbowl.vault.Vault;
+import net.milkbowl.vault.VaultEco;
 import net.milkbowl.vault.economy.Economy;
 
 
@@ -91,6 +93,8 @@ public class Main extends JavaPlugin implements Listener
 		}
 		warps = YamlConfiguration.loadConfiguration(Fwarps);
 	}
+	
+	
 
 	public String format (double y)
 	{
@@ -101,6 +105,7 @@ public class Main extends JavaPlugin implements Listener
 		{
 			if (y >= 1000) y = y / 1000;
 			else b = 100;
+			
 		}
 		//if (y >= 100) round = 1;
 		//else if (y >= 10) round = 10;
@@ -178,7 +183,7 @@ public class Main extends JavaPlugin implements Listener
 					player.sendMessage(ChatColor.AQUA + "/MLGprison editrankup <price|name> " + ChatColor.WHITE + "Edits a rankup");
 					player.sendMessage(ChatColor.AQUA + "/MLGprison warpval <name> <value> " + ChatColor.WHITE + "Changes the warp value");
 					player.sendMessage(ChatColor.AQUA + "/MLGprison setwarp <name> <value> " + ChatColor.WHITE + "Sets a warp of where you are standing");
-					player.sendMessage(ChatColor.YELLOW + "/rankup " + ChatColor.WHITE + "Rankup if you have the  Ð");
+					player.sendMessage(ChatColor.YELLOW + "/rankup " + ChatColor.WHITE + "Rankup if you have the  \u0189");
 					player.sendMessage(ChatColor.YELLOW + "/ranks " + ChatColor.WHITE + "Displays the ranks");
 					player.sendMessage(ChatColor.YELLOW + "/pwarp <name> " + ChatColor.WHITE + "Used for warping");
 					return true;
@@ -202,7 +207,7 @@ public class Main extends JavaPlugin implements Listener
 						}
 						rankups.set(a + ".Name",args[1]);
 						rankups.set(a + ".Price",Double.parseDouble(args[2]));
-						player.sendMessage(ChatColor.AQUA + "Rankup " + args[1] + " created which costs  Ð" + format(Double.parseDouble(args[2])));
+						player.sendMessage(ChatColor.AQUA + "Rankup " + args[1] + " created which costs  \u0189" + format(Double.parseDouble(args[2])));
 						try 
 						{
 							rankups.save(Frankups);
@@ -247,7 +252,7 @@ public class Main extends JavaPlugin implements Listener
 					if(args[1].equalsIgnoreCase("price"))
 					{
 						rankups.set(a + ".Price",Double.parseDouble(args[3]));
-						player.sendMessage(ChatColor.GREEN + "You have set the rankup cost to  Ð" + format(Double.parseDouble(args[3])));
+						player.sendMessage(ChatColor.GREEN + "You have set the rankup cost to  \u0189" + format(Double.parseDouble(args[3])));
 					}
 					else if(args[1].equalsIgnoreCase("name"))
 					{
@@ -346,7 +351,7 @@ public class Main extends JavaPlugin implements Listener
 					player.sendMessage(ChatColor.AQUA + "/MLGprison editrankup <price|name> " + ChatColor.WHITE + "Edits a rankup");
 					player.sendMessage(ChatColor.AQUA + "/MLGprison warpval <name> <value> " + ChatColor.WHITE + "Changes the warp value");
 					player.sendMessage(ChatColor.AQUA + "/MLGprison setwarp <name> <value> " + ChatColor.WHITE + "Sets a warp of where you are standing");
-					player.sendMessage(ChatColor.YELLOW + "/rankup " + ChatColor.WHITE + "Rankup if you have the  Ð");
+					player.sendMessage(ChatColor.YELLOW + "/rankup " + ChatColor.WHITE + "Rankup if you have the  \u0189");
 					player.sendMessage(ChatColor.YELLOW + "/ranks " + ChatColor.WHITE + "Displays the ranks");
 					player.sendMessage(ChatColor.YELLOW + "/pwarp <name> " + ChatColor.WHITE + "Used for warping");
 					return true;
@@ -363,7 +368,7 @@ public class Main extends JavaPlugin implements Listener
 				{
 					eco.withdrawPlayer(player,rankups.getDouble((rank + 1) + ".Price"));
 					data.set(player.getUniqueId().toString(),rank + 1);
-					player.sendMessage(ChatColor.YELLOW + "You have ranked up to " + rankups.getString((rank + 1) + ".Name") + " for  Ð" + format(rankups.getDouble((rank + 1) + ".Price")));
+					player.sendMessage(ChatColor.YELLOW + "You have ranked up to " + rankups.getString((rank + 1) + ".Name") + " for  \u0189" + format(rankups.getDouble((rank + 1) + ".Price")));
 					try 
 					{
 						data.save(Fdata);
@@ -375,12 +380,12 @@ public class Main extends JavaPlugin implements Listener
 				}
 				else
 				{
-					player.sendMessage(ChatColor.GREEN + "You a rank " + ChatColor.BLUE + rankups.getString(rank + ".Name"));
-					if (rankups.getDouble((rank + 1) + ".Price") - eco.getBalance(player) > 0.99) player.sendMessage(ChatColor.RED + "You need  Ð" + format(rankups.getDouble((rank + 1) + ".Price") - eco.getBalance(player)) + " more to rankup");
+					player.sendMessage(ChatColor.GREEN + "Your rank: " + ChatColor.BLUE + rankups.getString(rank + ".Name"));
+					if (rankups.getDouble((rank + 1) + ".Price") - eco.getBalance(player) > 0.99) player.sendMessage(ChatColor.RED + "You need  \u0189" + format(rankups.getDouble((rank + 1) + ".Price") - eco.getBalance(player)) + " more to rankup");
 					else 
 					{
 						double a = Math.round((rankups.getDouble((rank + 1) + ".Price") - eco.getBalance(player)) * 100);
-						player.sendMessage(ChatColor.RED + "You need  Ð" + a / 100 + " more to rankup");
+						player.sendMessage(ChatColor.RED + "You need  \u0189" + a / 100 + " more to rankup");
 					}
 				}
 			}
@@ -397,7 +402,7 @@ public class Main extends JavaPlugin implements Listener
 			{
 				try
 				{
-					player.sendMessage(ChatColor.translateAlternateColorCodes('&',"&e" + rankups.getString(a + ".Name") + " &f-> &e" + rankups.getString((a + 1) + ".Name") + " &fCosts &e Ð" + format(rankups.getDouble((a + 1) + ".Price"))));
+					player.sendMessage(ChatColor.translateAlternateColorCodes('&',"&e" + rankups.getString(a + ".Name") + " &f-> &e" + rankups.getString((a + 1) + ".Name") + " &fCosts &e \u0189" + format(rankups.getDouble((a + 1) + ".Price"))));
 					a++;
 				}
 				catch(ArrayIndexOutOfBoundsException ArrayIndexOutOfBoundsException)
