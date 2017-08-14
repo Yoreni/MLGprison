@@ -443,7 +443,7 @@ public class Main extends JavaPlugin implements Listener
 						player.teleport(warp);
 						player.sendMessage(ChatColor.translateAlternateColorCodes('&',"&fWarping to &e" + args[0]));
 					}
-					else player.sendMessage(ChatColor.RED + "You are the a high euogth rank to warp there");
+					else player.sendMessage(ChatColor.RED + "You're not a high enough rank to warp there");
 				}
 				else
 				{
