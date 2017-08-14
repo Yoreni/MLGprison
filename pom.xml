@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>yoreni</groupId>
-    <artifactId>MLGpriosn</artifactId>
+    <artifactId>MLGprison</artifactId>
     <version>1.1.1</version>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -20,7 +20,7 @@
             <id>tech-repo</id>
             <url>https://repo.techcable.net/content/groups/public/</url>
         </repository>
-		<repository>
+	<repository>
             <id>vault-repo</id>
             <url>http://nexus.hc.to/content/repositories/pub_releases</url>
         </repository>
@@ -63,7 +63,6 @@
         </dependency>
 		<dependency>
                 <groupId>net.milkbowl.vault</groupId>
-				<artifactId>Valut</artifactId>
                 <artifactId>VaultAPI</artifactId>
                 <version>1.6</version>
         </dependency>
