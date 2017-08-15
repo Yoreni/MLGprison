@@ -22,8 +22,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import net.milkbowl.vault.Vault;
-import net.milkbowl.vault.VaultEco;
 import net.milkbowl.vault.economy.Economy;
 
 
