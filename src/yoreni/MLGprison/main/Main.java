@@ -45,7 +45,8 @@ public class Main extends JavaPlugin implements Listener
 	{
 		if(!setupEconomy())
 		{
-			Bukkit.shutdown();
+			getServer().getLogger().severe("Vault eco could not be set up disableing plugin");
+			Bukkit.getPluginManager().disablePlugin(this);
 		}
 		getServer().getPluginManager().registerEvents(this,this);
 		if (!getDataFolder().exists()) 
