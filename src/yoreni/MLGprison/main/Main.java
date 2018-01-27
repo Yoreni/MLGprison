@@ -11,6 +11,7 @@ import java.util.HashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -18,6 +19,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -31,15 +33,14 @@ public class Main extends JavaPlugin implements Listener
 	private static Economy eco = null;
 	DecimalFormat abb = new DecimalFormat("0.######");
 
-	FileConfiguration rankups = null;
-	File Frankups = null;
+	DataFile rankups = new DataFile(this);
 
-	FileConfiguration data = null;
-	File Fdata = null;
+	DataFile data = new DataFile(this);
 
-	FileConfiguration warps = null;
-	File Fwarps = null;
+	DataFile warps = new DataFile(this);
 	
+	DataFile config = new DataFile(this);
+
 
 	public void onEnable()
 	{
@@ -53,51 +54,41 @@ public class Main extends JavaPlugin implements Listener
 		{
 			getDataFolder().mkdirs();
 		}
-		Frankups = new File(getDataFolder(), "rankups.yml");
-		if(!Frankups.exists())
+		rankups.setup("rankups");
+		data.setup("data");
+		warps.setup("warps");
+		
+		config.setup("config");
+		config.addSetting("StarterDays",30);
+		config.addSetting("StarterDaysAfterExpire",7);
+		int id = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() 
 		{
-			try 
+			public void run() 
 			{
-				Frankups.createNewFile();
-			} 
-			catch (IOException IOException) 
-			{
-				IOException.printStackTrace();
+				Collection<? extends Player> list = Bukkit.getOnlinePlayers();
+				for(Player player:list)
+				{
+					if(System.currentTimeMillis() > data.getLong(player.getUniqueId().toString() + ".Expire") && data.getInt(player.getUniqueId().toString() + ".Rank") >= 2)
+					{
+						long overflow = (data.getLong(player.getUniqueId().toString() + ".Expire") * System.currentTimeMillis()) * -1;
+						overflow /= 1000;
+						overflow /= 60;
+						overflow /= 60;
+						overflow /= 24;
+						int ranksLose = (int) Math.floor(overflow / 7) + 1;
+						data.changeInt(player.getUniqueId().toString() + ".Rank",ranksLose);
+						if(data.getInt(player.getUniqueId().toString() + ".Rank") < 1) data.set(player.getUniqueId().toString() + ".Rank", 1);
+						data.set(player.getUniqueId().toString() + ".Expire",System.currentTimeMillis() + (86400000L * config.getInt("StarterDaysAfterExpire")));
+						player.sendMessage(ChatColor.RED + "You have been ranked down to " + rankups.getString(data.getInt(player.getUniqueId().toString() + ".Rank") + "Name") + " while you where away");
+					}
+				}
 			}
-		}
-		rankups = YamlConfiguration.loadConfiguration(Frankups);
-		Fdata = new File(getDataFolder(), "data.yml");
-		if(!Fdata.exists())
-		{
-			try 
-			{
-				Fdata.createNewFile();
-			} 
-			catch (IOException IOException) 
-			{
-				IOException.printStackTrace();
-			}
-		}
-		data = YamlConfiguration.loadConfiguration(Fdata);
-		Fwarps = new File(getDataFolder(), "warps.yml");
-		if(!Fwarps.exists())
-		{
-			try 
-			{
-				Fwarps.createNewFile();
-			} 
-			catch (IOException IOException) 
-			{
-				IOException.printStackTrace();
-			}
-		}
-		warps = YamlConfiguration.loadConfiguration(Fwarps);
+		}, 0, 20 * 60);
 	}
-	
-	
 
 	public String format (double y)
 	{
+		if(y == 0) return "0";
 		String[] Abbrivateions = {"","k"," Mill"," Bill"," Trill", " Quad", " Quint"," Sext"," Sept"," Oct"," Non"," Dec"};
 		double round = Math.pow(10,2);
 		int amp = (int) Math.floor(Math.log10(y) / 3);
@@ -105,7 +96,7 @@ public class Main extends JavaPlugin implements Listener
 		{
 			if (y >= 1000) y = y / 1000;
 			else b = 100;
-			
+
 		}
 		//if (y >= 100) round = 1;
 		//else if (y >= 10) round = 10;
@@ -116,22 +107,38 @@ public class Main extends JavaPlugin implements Listener
 			y = 1;
 			amp++;
 		}
-		return eco.format(Double.parseDouble(abb.format(y))) + Abbrivateions[amp];
+		return abb.format(y) + Abbrivateions[amp];
 	}
 
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event)
 	{
 		Player player = event.getPlayer();
-		if(data.isSet(player.getUniqueId().toString())) return;
-		data.set(player.getUniqueId().toString(),1);
-		try 
+		if(!data.isSet(player.getUniqueId().toString()))
 		{
-			data.save(Fdata);
-		} 
-		catch (IOException IOException) 
+			data.set(player.getUniqueId().toString() + ".Rank",1);
+			data.set(player.getUniqueId().toString() + ".Expire",-1);
+		}
+		if(System.currentTimeMillis() > data.getLong(player.getUniqueId().toString() + ".Expire") && data.getInt(player.getUniqueId().toString() + ".Rank") >= 2)
 		{
-			IOException.printStackTrace();
+			long overflow = (data.getLong(player.getUniqueId().toString() + ".Expire") * System.currentTimeMillis()) * -1;
+			overflow /= 1000;
+			overflow /= 60;
+			overflow /= 60;
+			overflow /= 24;
+			int ranksLose = (int) Math.floor(overflow / 7) + 1;
+			data.changeInt(player.getUniqueId().toString() + ".Rank",ranksLose);
+			if(data.getInt(player.getUniqueId().toString() + ".Rank") < 1) data.set(player.getUniqueId().toString() + ".Rank", 1);
+			data.set(player.getUniqueId().toString() + ".Expire",System.currentTimeMillis() + (86400000L * config.getInt("StarterDaysAfterExpire")));
+			player.sendMessage(ChatColor.RED + "You have been ranked down to " + rankups.getString(data.getInt(player.getUniqueId().toString() + ".Rank") + "Name") + " while you where away");
+		}
+		else if(data.getInt(player.getUniqueId().toString() + ".Rank") >= 2)
+		{
+			long left = data.getLong(player.getUniqueId().toString() + ".Expire") - System.currentTimeMillis();
+			left /= 1000; //from ms to s
+			left /= 60;//from s to m
+			left /= 60;//from m to h
+			player.sendMessage(ChatColor.RED + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours");
 		}
 	}
 
@@ -156,10 +163,8 @@ public class Main extends JavaPlugin implements Listener
 	public boolean onCommand(CommandSender sender, Command command, String label, String[] args)
 	{
 		Player player = (Player) sender;
-		if(label.equalsIgnoreCase("a"))
+		/*if(label.equalsIgnoreCase("a"))
 		{
-			player.sendMessage(rankups + "");
-			player.sendMessage(Frankups + "");
 			rankups.set("test", 1);
 			try 
 			{
@@ -171,7 +176,7 @@ public class Main extends JavaPlugin implements Listener
 				IOException.printStackTrace();
 			}
 			return true;
-		}
+		}*/
 		if(label.equalsIgnoreCase("MLGprison"))
 		{
 			if(player.hasPermission("MLGprison"))
@@ -208,15 +213,6 @@ public class Main extends JavaPlugin implements Listener
 						rankups.set(a + ".Name",args[1]);
 						rankups.set(a + ".Price",Double.parseDouble(args[2]));
 						player.sendMessage(ChatColor.AQUA + "Rankup " + args[1] + " created which costs  " + format(Double.parseDouble(args[2])));
-						try 
-						{
-							rankups.save(Frankups);
-						} 
-						catch (IOException IOException) 
-						{
-							// TODO Auto-generated catch block
-							IOException.printStackTrace();
-						}
 						return true;
 					}
 				}
@@ -260,15 +256,6 @@ public class Main extends JavaPlugin implements Listener
 						player.sendMessage(ChatColor.GREEN + "You have changed the name to " + args[3]);
 					}
 					else player.sendMessage(ChatColor.RED + "Usage /MLGprison editrankup <price:name>");
-					try 
-					{
-						warps.save(Fwarps);
-					} 
-					catch (IOException IOException) 
-					{
-						// TODO Auto-generated catch block
-						IOException.printStackTrace();
-					}
 				}
 				else if(args[0].equalsIgnoreCase("warpval"))
 				{
@@ -292,15 +279,6 @@ public class Main extends JavaPlugin implements Listener
 							}
 						}
 						warps.set(a + ".Value",(int) Double.parseDouble(args[2]));
-						try 
-						{
-							warps.save(Fwarps);
-						} 
-						catch (IOException IOException) 
-						{
-							// TODO Auto-generated catch block
-							IOException.printStackTrace();
-						}
 						player.sendMessage(ChatColor.AQUA + "Warp " + args[1] + " has been set a warp value of " + args[2]);
 					}
 					else player.sendMessage(ChatColor.RED + "Usage /MLGprison warpval <name> <value>");
@@ -332,15 +310,6 @@ public class Main extends JavaPlugin implements Listener
 					warps.set(a + ".Yaw",player.getLocation().getYaw());
 					warps.set(a + ".Name",args[1]);
 					warps.set(a + ".Value",(int) Double.parseDouble(args[2]));
-					try 
-					{
-						warps.save(Fwarps);
-					} 
-					catch (IOException IOException) 
-					{
-						// TODO Auto-generated catch block
-						IOException.printStackTrace();
-					}
 					player.sendMessage(ChatColor.AQUA + "Warp " + args[1] + " has been set in World:" + player.getLocation().getWorld().getName() + " X:" + (int) player.getLocation().getX() + " Y:" + (int) player.getLocation().getY() + " Z:" + (int) player.getLocation().getZ() + " Pitch:" + (int) player.getLocation().getPitch() + " Yaw:" + (int) player.getLocation().getYaw());
 					return true;
 				}
@@ -359,23 +328,67 @@ public class Main extends JavaPlugin implements Listener
 			}
 			else player.sendMessage(ChatColor.RED + "m8 u dont have perms");
 		}
+		if(label.equalsIgnoreCase("renew"))
+		{
+			if(args.length > 0)
+			{
+				try
+				{
+					if((int) Double.parseDouble(args[0]) <= 0) player.sendMessage(ChatColor.RED + "Please use a number greater than 0");
+					int rank = data.getInt(player.getUniqueId().toString() + ".Rank");
+					double price = (rankups.getDouble((rank + 1) + ".Price") / 20) * (int) Double.parseDouble(args[0]);
+					if(eco.getBalance(player) >= price)
+					{
+						data.changeLong(player.getUniqueId().toString() + ".Expire",(86400000L * (int) Double.parseDouble(args[0])));
+						eco.withdrawPlayer(player,price);
+						player.sendMessage(ChatColor.GREEN + "" + ((int) Double.parseDouble(args[0])) + " Days renewed for " + format(price));
+						long left = data.getLong(player.getUniqueId().toString() + ".Expire") - System.currentTimeMillis();
+						left /= 1000; //from ms to s
+						left /= 60;//from s to m
+						left /= 60;//from m to h
+						player.sendMessage(ChatColor.GREEN + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours");
+					}
+					else
+					{
+						player.sendMessage(ChatColor.RED + "You need more money to renew your rank by " + args[0] + " day(s)");
+						player.sendMessage(ChatColor.RED + "It costs " + format((rankups.getDouble((rank + 1) + ".Price") / 20) * 1) + " to renew your rank by 1 day");
+					}
+				}
+				catch(Exception Exception)
+				{
+					Exception.printStackTrace();
+					player.sendMessage(ChatColor.RED + "Usage /renew <days>");
+					player.sendMessage(ChatColor.RED + "Please enter a number");
+					int rank = data.getInt(player.getUniqueId().toString() + ".Rank");
+					player.sendMessage(ChatColor.RED + "It costs " + format((rankups.getDouble((rank + 1) + ".Price") / 20) * 1) + " to renew your rank by 1 day");
+				}
+			}
+			else 
+			{
+				player.sendMessage(ChatColor.RED + "Usage /renew <days>");
+				int rank = data.getInt(player.getUniqueId().toString() + ".Rank");
+				player.sendMessage(ChatColor.RED + "It costs " + format((rankups.getDouble((rank + 1) + ".Price") / 20) * 1) + " to renew your rank by 1 day");
+			}
+
+		}
 		if(label.equalsIgnoreCase("rankup"))
 		{
 			try
 			{
-				int rank = data.getInt(player.getUniqueId().toString());
+				int rank = data.getInt(player.getUniqueId().toString() + ".Rank");
+				if(rankups.getString((rank + 1) + ".Name") == null)
+				{
+					player.sendMessage(ChatColor.RED + "You are already the highest rank");
+					return true;
+				}
 				if(eco.getBalance(player) >= rankups.getDouble((rank + 1) + ".Price"))
 				{
 					eco.withdrawPlayer(player,rankups.getDouble((rank + 1) + ".Price"));
-					data.set(player.getUniqueId().toString(),rank + 1);
-					player.sendMessage(ChatColor.YELLOW + "You have ranked up to " + rankups.getString((rank + 1) + ".Name") + " for  " + format(rankups.getDouble((rank + 1) + ".Price")));
-					try 
+					data.set(player.getUniqueId().toString() + ".Rank",rank + 1);
+					player.sendMessage(ChatColor.YELLOW + "You have ranked up to " + rankups.getString((rank + 1) + ".Name") + " for " + format(rankups.getDouble((rank + 1) + ".Price")));
+					if(rank + 1 == 2)
 					{
-						data.save(Fdata);
-					} 
-					catch (IOException IOException) 
-					{
-						IOException.printStackTrace();
+						data.set(player.getUniqueId().toString() + ".Expire",System.currentTimeMillis() + (86400000L * config.getInt("StarterDays")));
 					}
 				}
 				else
@@ -402,10 +415,16 @@ public class Main extends JavaPlugin implements Listener
 			{
 				try
 				{
+					if(rankups.getString((a + 1) + ".Name").equals(null))
+					{
+						run = false;
+						break;
+					}
 					player.sendMessage(ChatColor.translateAlternateColorCodes('&',"&e" + rankups.getString(a + ".Name") + " &f-> &e" + rankups.getString((a + 1) + ".Name") + " &fCosts &e " + format(rankups.getDouble((a + 1) + ".Price"))));
 					a++;
+					//if(a > 3) run = false;
 				}
-				catch(ArrayIndexOutOfBoundsException ArrayIndexOutOfBoundsException)
+				catch(NullPointerException NullPointerException)
 				{
 					run = false;
 				}
@@ -436,7 +455,7 @@ public class Main extends JavaPlugin implements Listener
 							return true;
 						}
 					}
-					if(data.getInt(player.getUniqueId().toString()) >= warps.getInt(a + ".Value"))
+					if(data.getInt(player.getUniqueId().toString() + ".Rank") >= warps.getInt(a + ".Value"))
 					{
 						Location warp = new Location(Bukkit.getWorld("world"),0,128,0);
 						warp.setWorld(Bukkit.getWorld(warps.getString(a + ".World")));
