@@ -114,6 +114,7 @@ public class Main extends JavaPlugin implements Listener
 	public void onPlayerJoin(PlayerJoinEvent event)
 	{
 		Player player = event.getPlayer();
+		if(!player.getWorld().getName().equals("prison")) return;
 		if(!data.isSet(player.getUniqueId().toString()))
 		{
 			data.set(player.getUniqueId().toString() + ".Rank",1);
@@ -138,7 +139,7 @@ public class Main extends JavaPlugin implements Listener
 			left /= 1000; //from ms to s
 			left /= 60;//from s to m
 			left /= 60;//from m to h
-			player.sendMessage(ChatColor.RED + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours");
+			player.sendMessage(ChatColor.RED + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours. Use /renew <days> to renew your rank");
 		}
 	}
 
@@ -336,6 +337,11 @@ public class Main extends JavaPlugin implements Listener
 				{
 					if((int) Double.parseDouble(args[0]) <= 0) player.sendMessage(ChatColor.RED + "Please use a number greater than 0");
 					int rank = data.getInt(player.getUniqueId().toString() + ".Rank");
+					if(rank == 1)
+					{
+						player.sendMessage(ChatColor.RED + "You dont need to renew your rank when your already at the lowest rank");
+						return true;
+					}
 					double price = (rankups.getDouble((rank + 1) + ".Price") / 20) * (int) Double.parseDouble(args[0]);
 					if(eco.getBalance(player) >= price)
 					{
