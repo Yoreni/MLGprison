@@ -20,6 +20,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -374,8 +375,12 @@ public class Main extends JavaPlugin implements Listener
 				player.sendMessage(ChatColor.RED + "Usage /renew <days>");
 				int rank = data.getInt(player.getUniqueId().toString() + ".Rank");
 				player.sendMessage(ChatColor.RED + "It costs " + format((rankups.getDouble((rank + 1) + ".Price") / 20) * 1) + " to renew your rank by 1 day");
+				long left = data.getLong(player.getUniqueId().toString() + ".Expire") - System.currentTimeMillis();
+				left /= 1000; //from ms to s
+				left /= 60;//from s to m
+				left /= 60;//from m to h
+				player.sendMessage(ChatColor.GREEN + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours");
 			}
-
 		}
 		if(label.equalsIgnoreCase("rankup"))
 		{
@@ -495,5 +500,19 @@ public class Main extends JavaPlugin implements Listener
 			else player.sendMessage(ChatColor.RED + "You can only warp when ur in prison");
 		}
 		return false;
+	}
+	
+	@EventHandler
+	public void onWorldChange(PlayerChangedWorldEvent event)
+	{
+		Player player = event.getPlayer();
+		if(player.getWorld().getName().equals("prison"))
+		{
+			long left = data.getLong(player.getUniqueId().toString() + ".Expire") - System.currentTimeMillis();
+			left /= 1000; //from ms to s
+			left /= 60;//from s to m
+			left /= 60;//from m to h
+			player.sendMessage(ChatColor.GREEN + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours");
+		}
 	}
 }
