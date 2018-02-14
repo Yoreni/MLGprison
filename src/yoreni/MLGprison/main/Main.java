@@ -140,7 +140,7 @@ public class Main extends JavaPlugin implements Listener
 			left /= 1000; //from ms to s
 			left /= 60;//from s to m
 			left /= 60;//from m to h
-			player.sendMessage(ChatColor.RED + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours. Use /renew <days> to renew your rank");
+			player.sendMessage(ChatColor.RED + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours. Use /renew <days> or /rankup to extend this time");
 		}
 	}
 
@@ -512,7 +512,7 @@ public class Main extends JavaPlugin implements Listener
 			left /= 1000; //from ms to s
 			left /= 60;//from s to m
 			left /= 60;//from m to h
-			player.sendMessage(ChatColor.GREEN + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours");
+			player.sendMessage(ChatColor.GREEN + "You will be ranked down in " + ((int) Math.floor(left / 24)) + " days and " + (left % 24) + " hours. Use /renew <days> or /rankup to extend this time");
 		}
 	}
 }
