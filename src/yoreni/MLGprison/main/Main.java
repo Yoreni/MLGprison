@@ -1,31 +1,24 @@
 package yoreni.MLGprison.main;
 
-import java.awt.List;
-import java.io.File;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.milkbowl.vault.economy.Economy;
+import yoreni.MLGprison.main.listener.PrisonProtection;
 
 
 public class Main extends JavaPlugin implements Listener
@@ -47,8 +40,9 @@ public class Main extends JavaPlugin implements Listener
 	{
 		if(!setupEconomy())
 		{
-			getServer().getLogger().severe("Vault eco could not be set up disableing plugin");
+			getServer().getLogger().severe("Vault eco could not be set up disabling plugin");
 			Bukkit.getPluginManager().disablePlugin(this);
+			return;
 		}
 		getServer().getPluginManager().registerEvents(this,this);
 		if (!getDataFolder().exists()) 
@@ -62,6 +56,7 @@ public class Main extends JavaPlugin implements Listener
 		config.setup("config");
 		config.addSetting("StarterDays",30);
 		config.addSetting("StarterDaysAfterExpire",7);
+		new PrisonProtection(this);
 		int id = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() 
 		{
 			public void run() 
