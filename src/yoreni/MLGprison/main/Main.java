@@ -115,12 +115,12 @@ public class Main extends JavaPlugin implements Listener
 	public void onPlayerJoin(PlayerJoinEvent event)
 	{
 		Player player = event.getPlayer();
-		if(!player.getWorld().getName().equals("prison")) return;
 		if(!data.isSet(player.getUniqueId().toString()))
 		{
 			data.set(player.getUniqueId().toString() + ".Rank",1);
 			data.set(player.getUniqueId().toString() + ".Expire",-1);
 		}
+		if(!player.getWorld().getName().equals("prison")) return;
 		if(System.currentTimeMillis() > data.getLong(player.getUniqueId().toString() + ".Expire") && data.getInt(player.getUniqueId().toString() + ".Rank") >= 2)
 		{
 			long overflow = (data.getLong(player.getUniqueId().toString() + ".Expire") * System.currentTimeMillis()) * -1;
