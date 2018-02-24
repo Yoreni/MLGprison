@@ -1,31 +1,26 @@
 package yoreni.MLGprison.main;
 
-import java.awt.List;
-import java.io.File;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.milkbowl.vault.economy.Economy;
+import yoreni.MLGprison.main.listener.PrisonProtection;
 
 
 public class Main extends JavaPlugin implements Listener
@@ -39,16 +34,19 @@ public class Main extends JavaPlugin implements Listener
 	DataFile data = new DataFile(this);
 
 	DataFile warps = new DataFile(this);
-	
+
 	DataFile config = new DataFile(this);
+
+	DataFile sell = new DataFile(this);
 
 
 	public void onEnable()
 	{
 		if(!setupEconomy())
 		{
-			getServer().getLogger().severe("Vault eco could not be set up disableing plugin");
+			getServer().getLogger().severe("Vault eco could not be set up disabling plugin");
 			Bukkit.getPluginManager().disablePlugin(this);
+			return;
 		}
 		getServer().getPluginManager().registerEvents(this,this);
 		if (!getDataFolder().exists()) 
@@ -58,10 +56,12 @@ public class Main extends JavaPlugin implements Listener
 		rankups.setup("rankups");
 		data.setup("data");
 		warps.setup("warps");
-		
+		sell.setup("sell");
+
 		config.setup("config");
 		config.addSetting("StarterDays",30);
 		config.addSetting("StarterDaysAfterExpire",7);
+		new PrisonProtection(this);
 		int id = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new Runnable() 
 		{
 			public void run() 
@@ -190,9 +190,12 @@ public class Main extends JavaPlugin implements Listener
 					player.sendMessage(ChatColor.AQUA + "/MLGprison editrankup <price|name> " + ChatColor.WHITE + "Edits a rankup");
 					player.sendMessage(ChatColor.AQUA + "/MLGprison warpval <name> <value> " + ChatColor.WHITE + "Changes the warp value");
 					player.sendMessage(ChatColor.AQUA + "/MLGprison setwarp <name> <value> " + ChatColor.WHITE + "Sets a warp of where you are standing");
+					player.sendMessage(ChatColor.AQUA + "/MLGprison addmuti <rank> <amount> " + ChatColor.WHITE + "Sets a muti for a rank");
+					player.sendMessage(ChatColor.AQUA + "/MLGprison additem <amount> " + ChatColor.WHITE + "Adds an item that can be sold");
 					player.sendMessage(ChatColor.YELLOW + "/rankup " + ChatColor.WHITE + "Rankup if you have the  ");
 					player.sendMessage(ChatColor.YELLOW + "/ranks " + ChatColor.WHITE + "Displays the ranks");
 					player.sendMessage(ChatColor.YELLOW + "/pwarp <name> " + ChatColor.WHITE + "Used for warping");
+					player.sendMessage(ChatColor.YELLOW + "/sellall " + ChatColor.WHITE + "sell all of your items");
 					return true;
 				}
 				if(args[0].equalsIgnoreCase("createrankup"))
@@ -315,6 +318,57 @@ public class Main extends JavaPlugin implements Listener
 					player.sendMessage(ChatColor.AQUA + "Warp " + args[1] + " has been set in World:" + player.getLocation().getWorld().getName() + " X:" + (int) player.getLocation().getX() + " Y:" + (int) player.getLocation().getY() + " Z:" + (int) player.getLocation().getZ() + " Pitch:" + (int) player.getLocation().getPitch() + " Yaw:" + (int) player.getLocation().getYaw());
 					return true;
 				}
+				else if(args[0].equalsIgnoreCase("addmuti"))
+				{
+					try
+					{
+						boolean run = true;
+						int a = 1;
+						while(run)
+						{
+							if(rankups.isSet(a + ""))
+							{
+								if(rankups.getString(a + ".Name").equalsIgnoreCase(args[1]))
+								{
+									run = false;
+								}
+								else a++;
+							}
+							else
+							{
+								run = false;
+							}
+						}
+						rankups.set(a + ".Muti",Double.parseDouble(args[2]));
+						player.sendMessage(ChatColor.AQUA + "Rank " + rankups.getString(a + ".Name") + " now has a muti of x" + Double.parseDouble(args[2]));
+					}
+					catch(Exception Exception)
+					{
+						player.sendMessage(ChatColor.RED + "usage /MLGprison addmuti <rank> <amount>");
+					}
+				}
+				else if(args[0].equalsIgnoreCase("additem"))
+				{
+					//try
+					//{
+					ItemStack hand = player.getItemInHand();
+					if(hand == null)
+					{
+						player.sendMessage(ChatColor.RED + "Please hold an item in your hand");
+						return true;
+					}
+					int id = hand.getTypeId();
+					int meta = hand.getDurability();
+					String a = id + ":" + meta;
+					sell.set(a,Double.parseDouble(args[1]));
+					player.sendMessage(ChatColor.AQUA + "Item " + a + " now sells for " + format(Double.parseDouble(args[1])));
+					//}
+					//catch(Exception Exception)
+					//{
+					//	Exception.printStackTrace();
+					//	player.sendMessage(ChatColor.RED + "usage /MLGprison additem <amount>");
+					//}
+				}
 				else
 				{
 					player.sendMessage(ChatColor.GOLD + "MLGprison help");
@@ -322,9 +376,12 @@ public class Main extends JavaPlugin implements Listener
 					player.sendMessage(ChatColor.AQUA + "/MLGprison editrankup <price|name> " + ChatColor.WHITE + "Edits a rankup");
 					player.sendMessage(ChatColor.AQUA + "/MLGprison warpval <name> <value> " + ChatColor.WHITE + "Changes the warp value");
 					player.sendMessage(ChatColor.AQUA + "/MLGprison setwarp <name> <value> " + ChatColor.WHITE + "Sets a warp of where you are standing");
+					player.sendMessage(ChatColor.AQUA + "/MLGprison addmuti <rank> <amount> " + ChatColor.WHITE + "Sets a muti for a rank");
+					player.sendMessage(ChatColor.AQUA + "/MLGprison additem <amount> " + ChatColor.WHITE + "Adds an item that can be sold");
 					player.sendMessage(ChatColor.YELLOW + "/rankup " + ChatColor.WHITE + "Rankup if you have the  ");
 					player.sendMessage(ChatColor.YELLOW + "/ranks " + ChatColor.WHITE + "Displays the ranks");
 					player.sendMessage(ChatColor.YELLOW + "/pwarp <name> " + ChatColor.WHITE + "Used for warping");
+					player.sendMessage(ChatColor.YELLOW + "/sellall " + ChatColor.WHITE + "sell all of your items");
 					return true;
 				}
 			}
@@ -441,6 +498,40 @@ public class Main extends JavaPlugin implements Listener
 				}
 			}
 		}
+		if(label.equalsIgnoreCase("sellall"))
+		{
+			if(player.getWorld().getName().equals("prison"))
+			{
+				Inventory inv = player.getInventory();
+				int slot = 0;
+				double money = 0;
+				int sold = 0;
+				while(slot < 36)
+				{
+					ItemStack item = inv.getItem(slot);
+					if(item != null)
+					{
+						int id = item.getTypeId();
+						int meta = item.getDurability();
+						String a = id + ":" + meta;
+						if(sell.isSet(a))
+						{
+							int amount = item.getAmount();
+							sold += amount;
+							money += sell.getDouble(a) * amount;
+							item.setAmount(0);
+						}
+					}
+					slot++;
+				}
+				int rank = data.getInt(player.getUniqueId().toString() + ".Rank");
+				if(rankups.isSet(rank + ".Muti")) money *= rankups.getDouble(rank + ".Muti");
+				eco.depositPlayer(player,money);
+				if(sold == 0) player.sendMessage(ChatColor.RED + "You dont have any items to sell");
+				else player.sendMessage(ChatColor.YELLOW + "Sold " + sold + " items for " + format(money));
+			}
+			else player.sendMessage(ChatColor.RED + "You can only sell items when ur in prison");
+		}
 		if(label.equalsIgnoreCase("pwarp"))
 		{
 			if(player.getWorld().getName().equals("prison"))
@@ -501,7 +592,7 @@ public class Main extends JavaPlugin implements Listener
 		}
 		return false;
 	}
-	
+
 	@EventHandler
 	public void onWorldChange(PlayerChangedWorldEvent event)
 	{
